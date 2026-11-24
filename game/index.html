@@ -23,17 +23,17 @@
 
   /* HUD */
   #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
-  #hud-mission { position: absolute; top: 14px; left: 16px; max-width: 340px;
+  #hud-mission { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); max-width: 46vw; text-align: center;
     background: rgba(0,0,0,.55); border-left: 4px solid #ffb02e; padding: 10px 12px;
     font-size: 14px; line-height: 1.45; }
   #hud-mission b { color: #ffd75e; }
   #mission-tracker { position: absolute; top: 14px; left: 16px; max-width: 340px;
     background: rgba(0,0,0,.55); border-left: 4px solid #ffb02e; padding: 10px 12px;
     font-size: 14px; line-height: 1.45; display: none; }
-  #mission-message { position: absolute; left: 50%; top: 76px; transform: translateX(-50%);
+  #mission-message { position: absolute; left: 50%; top: 132px; transform: translateX(-50%);
     font-size: 18px; font-weight: 700; color: #ffd75e; text-shadow: 0 2px 4px #000;
     display: none; text-align: center; }
-  #race-hud { position: absolute; left: 50%; top: 110px; transform: translateX(-50%);
+  #race-hud { position: absolute; left: 50%; top: 172px; transform: translateX(-50%);
     font-size: 16px; font-weight: 700; color: #7dff9a; text-shadow: 0 2px 4px #000;
     display: none; text-align: center; }
   #hud-sidejobs { position: absolute; left: 16px; top: 150px; max-width: 300px;

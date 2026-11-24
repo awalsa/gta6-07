@@ -194,6 +194,7 @@ function spawnEnemy(x, z, hp = 100) {
     hp,
     maxHp: hp,
     dead: false,
+    alive: true,
     hitCooldown: 0,
     attackCooldown: 0,
     speed: ENEMY_WALK_SPEED * (0.9 + Math.random() * 0.3),
@@ -220,6 +221,7 @@ function damageEnemy(e, amount, ctx) {
   }
   if (e.hp <= 0) {
     e.dead = true;
+    e.alive = false;
     e.group.visible = false;
     combat.kills += 1;
     const s = stateOf(ctx);

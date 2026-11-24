@@ -728,7 +728,7 @@ function ensureHud() {
   // created is what left the tracker blank in round-6 v1. Build the
   // children whenever they are missing, whichever branch ran.
   trackerEl.style.cssText = [
-    'position:fixed', 'top:12px', 'left:14px', 'z-index:55',
+    'position:fixed', 'top:12px', 'left:50%', 'transform:translateX(-50%)', 'z-index:55',
     'background:rgba(10,10,18,0.75)', 'color:#fff', 'padding:10px 12px',
     'border-radius:10px', 'border:1px solid rgba(255,255,255,0.18)',
     'font-family:system-ui,sans-serif', 'font-size:14px', 'line-height:1.5',

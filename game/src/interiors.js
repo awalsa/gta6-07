@@ -176,7 +176,7 @@ function buildRoom(ctx, place) {
   const def = ROOMS[place];
   const g = new T.Group();
   const [cx, , cz] = def.center;
-  const W = 16; // room width (x), D = 14 (z), H = 5 (y)
+  const W = 16, D = 14, H = 5; // room width (x), depth (z), height (y)
 
   // Floor + ceiling + 4 walls.
   const floor = new T.Mesh(
@@ -415,6 +415,30 @@ export function update(dt, ctx) {
   const exitPos = new T.Vector3(c[0], 0, c[2] + 5);
   const bedPos = new T.Vector3(c[0] - 4.5, 0, c[2] - 3);
   const tablePos = new T.Vector3(c[0], 0, c[2] - 1);
+
+  // Walk inside the room (WASD, world axes). The player module freezes
+  // on-foot movement while insideInterior, so without this the player is
+  // stuck at the entry point (center + 3z) and can never reach the bed
+  // (7.5u away) or the casino table (4u away) — both outside the 3.5u
+  // F range. Clamp to the room so the player cannot walk through the
+  // walls, and face the movement direction so the follow camera swings
+  // behind. (playerPos `p` above is the live mesh position, so the F
+  // checks below see the moved position.)
+  if (!overlayOpen && !inPlane && ctx.player && ctx.player.mesh) {
+    const step = Math.min(typeof dt === 'number' && dt > 0 ? dt : 0.016, 0.1);
+    let mx = (keyDown(ctx, 'KeyD') ? 1 : 0) - (keyDown(ctx, 'KeyA') ? 1 : 0);
+    let mz = (keyDown(ctx, 'KeyS') ? 1 : 0) - (keyDown(ctx, 'KeyW') ? 1 : 0);
+    if (mx !== 0 || mz !== 0) {
+      const len = Math.hypot(mx, mz);
+      mx /= len;
+      mz /= len;
+      const mesh = ctx.player.mesh;
+      const nx = Math.max(c[0] - 7, Math.min(c[0] + 7, mesh.position.x + mx * 6 * step));
+      const nz = Math.max(c[2] - 6, Math.min(c[2] + 6, mesh.position.z + mz * 6 * step));
+      setPlayerPos(ctx, new T.Vector3(nx, 0, nz));
+      mesh.rotation.y = Math.atan2(mx, mz);
+    }
+  }
 
   if (fPressed && !overlayOpen) {
     if (p.distanceTo(exitPos) < 3.5) { exitInterior(ctx); return; }

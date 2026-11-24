@@ -162,7 +162,8 @@ export function init(ctx) {
       if (!pos || typeof pos.x !== 'number' || typeof pos.z !== 'number') return false;
       const foes = ctx.combat && Array.isArray(ctx.combat.enemies) ? ctx.combat.enemies : [];
       for (const foe of foes) {
-        if (foe && foe.alive && foe.pos && Math.hypot(foe.pos.x - pos.x, foe.pos.z - pos.z) < 3) return false;
+        if (foe && foe.alive && !foe.dead && foe.group && foe.group.position
+          && Math.hypot(foe.group.position.x - pos.x, foe.group.position.z - pos.z) < 3) return false;
       }
       const crowd = ctx.pedestrians && Array.isArray(ctx.pedestrians.list) ? ctx.pedestrians.list : [];
       let nearest = null;

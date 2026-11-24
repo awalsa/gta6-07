@@ -437,9 +437,13 @@ function ensureElements() {
   els.respect.id = 'hud-respect';
   els.respect.style.fontSize = '12px';
   els.respect.style.color = '#a0aec0';
-  const hpWrap = el('div', null, 'width:170px;height:10px;background:#2d3748;border-radius:5px;margin-top:4px;overflow:hidden;');
+  const hpWrap = el('div', null, 'position:relative;width:170px;height:10px;background:#2d3748;border-radius:5px;margin-top:4px;overflow:hidden;');
   els.healthBar = el('div', null, 'height:100%;width:100%;background:#48bb78;');
-  els.healthBar.id = 'hud-health';
+  // NOTE: do NOT give this fill the id 'hud-health' — index.html already
+  // has a static #hud-health (bottom-left), whose CSS (#hud-health {
+  // position:absolute; left:16px; bottom:16px; width:220px; }) would
+  // absolutely position this fill over the whole top-left bar as a solid
+  // green 274x127 block, hiding the cash/stars/respect text.
   hpWrap.appendChild(els.healthBar);
   els.bar.appendChild(els.cash);
   els.bar.appendChild(els.wanted);
