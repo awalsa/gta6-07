@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>ISLA BRASA 3D — Open City</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e14;
+    font-family: "Segoe UI", Arial, Helvetica, sans-serif; color: #f2f2f2; }
+  #game-container { position: fixed; inset: 0; }
+  #game-container canvas { display: block; }
+  #loading { position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px; z-index: 5; background: #0b0e14; }
+  #loading h1 { color: #ffb02e; letter-spacing: 4px; font-size: 34px; }
+  #loading p { color: #aaa; }
+  #loading-error { position: fixed; top: 40%; left: 50%; transform: translateX(-50%);
+    display: none; background: #a00; color: #fff; padding: 14px 18px; z-index: 50;
+    max-width: 80vw; font-size: 15px; line-height: 1.5; border-radius: 6px; }
+  #interior-fade { position: fixed; inset: 0; background: #000; opacity: 0;
+    pointer-events: none; transition: opacity .4s; z-index: 15; }
+
+  /* HUD */
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+  #hud-mission { position: absolute; top: 14px; left: 16px; max-width: 340px;
+    background: rgba(0,0,0,.55); border-left: 4px solid #ffb02e; padding: 10px 12px;
+    font-size: 14px; line-height: 1.45; }
+  #hud-mission b { color: #ffd75e; }
+  #mission-tracker { position: absolute; top: 14px; left: 16px; max-width: 340px;
+    background: rgba(0,0,0,.55); border-left: 4px solid #ffb02e; padding: 10px 12px;
+    font-size: 14px; line-height: 1.45; display: none; }
+  #mission-message { position: absolute; left: 50%; top: 76px; transform: translateX(-50%);
+    font-size: 18px; font-weight: 700; color: #ffd75e; text-shadow: 0 2px 4px #000;
+    display: none; text-align: center; }
+  #race-hud { position: absolute; left: 50%; top: 110px; transform: translateX(-50%);
+    font-size: 16px; font-weight: 700; color: #7dff9a; text-shadow: 0 2px 4px #000;
+    display: none; text-align: center; }
+  #hud-sidejobs { position: absolute; left: 16px; top: 150px; max-width: 300px;
+    background: rgba(0,0,0,.5); padding: 8px 10px; font-size: 13px; line-height: 1.4;
+    display: none; }
+  #hud-top-right { position: absolute; top: 14px; right: 16px; text-align: right;
+    text-shadow: 0 2px 4px rgba(0,0,0,.8); }
+  #hud-cash { font-size: 28px; font-weight: 800; color: #7dff9a; letter-spacing: 1px; }
+  #hud-wanted { font-size: 22px; letter-spacing: 4px; color: #ffb02e; margin-top: 2px; }
+  #wanted-stars { font-size: 22px; letter-spacing: 4px; color: #ffb02e; }
+  #hud-respect { font-size: 14px; color: #ffd75e; margin-top: 2px; }
+  #hud-health { position: absolute; left: 16px; bottom: 16px; width: 220px; }
+  #hud-health .label { font-size: 12px; letter-spacing: 2px; color: #ddd; text-shadow: 0 1px 3px #000; }
+  #health-bar { height: 12px; background: rgba(0,0,0,.6); border: 1px solid #555; margin-top: 3px; }
+  #health-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #e33, #f66); }
+  #minimap { position: absolute; right: 16px; bottom: 16px; width: 180px; height: 180px;
+    background: rgba(8, 12, 20, .85); border: 2px solid rgba(255,255,255,.35); border-radius: 50%; }
+  #hud-hint { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; color: #ccc; background: rgba(0,0,0,.5); padding: 5px 10px; border-radius: 4px;
+    white-space: nowrap; }
+  #dialogue-box { position: absolute; left: 50%; bottom: 110px; transform: translateX(-50%);
+    width: min(560px, 90vw); background: rgba(10, 10, 16, .88); border: 1px solid #ffb02e;
+    padding: 14px 16px; font-size: 15px; line-height: 1.5; display: none; }
+  #dialogue-box .speaker { color: #ffd75e; font-weight: 700; margin-bottom: 4px; }
+  #hud-toast { position: absolute; left: 50%; bottom: 190px; transform: translateX(-50%);
+    background: rgba(0,0,0,.75); border: 1px solid #ffb02e; padding: 8px 14px;
+    font-size: 14px; display: none; max-width: 80vw; text-align: center; }
+  #hud-prompt { position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%);
+    background: rgba(0,0,0,.7); padding: 6px 12px; font-size: 13px; color: #ffd75e;
+    display: none; white-space: nowrap; }
+
+  /* Overlays */
+  .overlay { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(0,0,0,.72); z-index: 20; pointer-events: auto; }
+  .overlay.open { display: flex; }
+  .panel { width: min(620px, 92vw); max-height: 84vh; overflow: auto; background: #141821;
+    border: 1px solid #ffb02e; border-radius: 8px; padding: 20px 22px; }
+  .panel h2 { color: #ffd75e; margin-bottom: 4px; letter-spacing: 1px; }
+  .panel p.sub { color: #aaa; font-size: 13px; margin-bottom: 14px; }
+  .panel .row { display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 4px; border-bottom: 1px solid #2a2f3d; font-size: 14px; }
+  .panel button { background: #ffb02e; color: #111; border: 0; border-radius: 4px;
+    padding: 7px 14px; font-weight: 700; cursor: pointer; }
+  .panel button:disabled { background: #555; color: #999; cursor: default; }
+  .panel .close { background: #333; color: #eee; margin-top: 14px; }
+  #map-canvas { display: block; width: 100%; max-width: 560px; background: #0a1420;
+    border: 1px solid #444; margin: 0 auto; }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.min.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="game-container"></div>
+
+<div id="loading">
+  <h1>ISLA BRASA 3D</h1>
+  <p>Loading the city&hellip;</p>
+</div>
+<div id="loading-error"></div>
+<div id="interior-fade"></div>
+
+<div id="hud">
+  <div id="hud-mission"><b>MISSION</b><br><span id="hud-mission-text">Welcome to Isla Brasa. Press H for help.</span></div>
+  <div id="mission-tracker"></div>
+  <div id="mission-message"></div>
+  <div id="race-hud"></div>
+  <div id="hud-sidejobs"></div>
+  <div id="hud-top-right">
+    <div id="hud-cash">$500</div>
+    <div id="hud-wanted"><span id="wanted-stars"></span></div>
+    <div id="hud-respect">Nobody</div>
+  </div>
+  <div id="hud-health">
+    <div class="label">HEALTH</div>
+    <div id="health-bar"><div id="health-fill"></div></div>
+  </div>
+  <canvas id="minimap" width="180" height="180"></canvas>
+  <div id="dialogue-box"><div class="speaker"></div><div class="line"></div></div>
+  <div id="hud-toast"></div>
+  <div id="hud-prompt"></div>
+  <div id="hud-hint">WASD move &middot; Shift run &middot; E enter/exit car &middot; F interact &middot; Q weapon wheel &middot; G shop &middot; R race &middot; M map &middot; N mute &middot; V rain &middot; H help</div>
+</div>
+
+<div class="overlay" id="overlay-shop"><div class="panel">
+  <h2>SHOP</h2><p class="sub">Clothes and weapons. Your cash: <span class="shop-cash">$500</span></p>
+  <div id="shop-items"></div>
+  <button class="close" data-close="overlay-shop">Close (G)</button>
+</div></div>
+
+<div class="overlay" id="overlay-garage"><div class="panel">
+  <h2>BRASA GARAGE</h2><p class="sub">Buy cars, upgrade them, sell for 60% + 40% of upgrades.</p>
+  <div id="garage-items"></div>
+  <button class="close" data-close="overlay-garage">Close (G)</button>
+</div></div>
+
+<div class="overlay" id="overlay-crew"><div class="panel">
+  <h2>CREW</h2><p class="sub">Hire help for missions. Each member levels up 0&ndash;3.</p>
+  <div id="crew-items"></div>
+  <button class="close" data-close="overlay-crew">Close</button>
+</div></div>
+
+<div class="overlay" id="overlay-weapons"><div class="panel">
+  <h2>WEAPON WHEEL</h2><p class="sub">Hold Q in game to open the wheel. Pick a weapon:</p>
+  <div id="weapons-items"></div>
+  <button class="close" data-close="overlay-weapons">Close (Q)</button>
+</div></div>
+
+<div class="overlay" id="overlay-casino"><div class="panel">
+  <h2>CORAL ROOM CASINO</h2><p class="sub">Slots, blackjack and roulette. Bet your cash.</p>
+  <div id="casino-items"></div>
+  <button class="close" data-close="overlay-casino">Leave the casino</button>
+</div></div>
+
+<div class="overlay" id="overlay-map"><div class="panel">
+  <h2>MAP OF ISLA BRASA</h2><p class="sub">Landmarks, roads and the beach. You are the gold dot.</p>
+  <canvas id="map-canvas" width="560" height="560"></canvas>
+  <button class="close" data-close="overlay-map">Close (M)</button>
+</div></div>
+
+<div class="overlay" id="overlay-help"><div class="panel">
+  <h2>HOW TO PLAY</h2><p class="sub">Isla Brasa — a sun-soaked open city. 12 missions + a 3-part heist, 3 street races, side jobs, properties and a casino.</p>
+  <div class="row"><span>Move / run</span><span>WASD / Shift</span></div>
+  <div class="row"><span>Enter / exit car</span><span>E</span></div>
+  <div class="row"><span>Interact / talk</span><span>F</span></div>
+  <div class="row"><span>Weapon wheel (hold)</span><span>Q</span></div>
+  <div class="row"><span>Shop / garage</span><span>G</span></div>
+  <div class="row"><span>Start race (near start)</span><span>R</span></div>
+  <div class="row"><span>Map</span><span>M</span></div>
+  <div class="row"><span>Toggle rain</span><span>V</span></div>
+  <div class="row"><span>Mute</span><span>N</span></div>
+  <div class="row"><span>Help</span><span>H</span></div>
+  <button class="close" data-close="overlay-help">Close (H)</button>
+</div></div>
+
+<script type="module">
+  // Boot loader: Three.js is vendored locally at ./vendor/three.module.min.js,
+  // so the game loads with no network request. The import map above maps the
+  // bare specifier "three" to that local file; only after THREE loads do we
+  // import the game itself, so no game module ever runs without the library.
+  const loading = document.getElementById('loading');
+  const errorBox = document.getElementById('loading-error');
+
+  try {
+    const THREE = await import('three');
+    window.__ISLA_THREE__ = THREE;
+    await import('./src/main.js');
+    if (loading) loading.style.display = 'none';
+  } catch (err) {
+    console.error('[ISLA BRASA] boot failed:', err);
+    if (loading) loading.style.display = 'none';
+    if (errorBox) {
+      errorBox.textContent = 'Could not load the vendored Three.js library. Reload the page.';
+      errorBox.style.display = 'block';
+    }
+  }
+
+  // Overlay close buttons work even if no game module has loaded yet.
+  document.querySelectorAll('[data-close]').forEach((button) => {
+    button.addEventListener('click', () => {
+      document.getElementById(button.dataset.close)?.classList.remove('open');
+    });
+  });
+</script>
+</body>
+</html>
